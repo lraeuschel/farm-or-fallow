@@ -5,7 +5,20 @@
 
 A web-based serious game for climate data interpretation and agricultural decision-making.
 
-<img src="docs/screenshot_summer1.png" alt="Game Screenshot" width="400" style="border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+## Table of Contents
+
+- [About the Project](#about-the-project)
+- [Technology](#technology)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Gameplay](#gameplay)
+- [Project Structure](#project-structure)
+- [Development](#development)
+- [Context: Bachelor's Thesis](#context-bachelors-thesis)
+- [Credits](#credits)
+- [License](#license)
+- [Contact](#contact)
 
 ## About the Project
 
