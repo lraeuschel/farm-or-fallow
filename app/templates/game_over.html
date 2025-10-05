@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+<meta http-equiv="Cache-Control" content="no-store" />
+
+{% block content %}
+<h1>Game Over</h1>
+
+<p class="game-over-paragraph">
+    {% if total_profit is defined and total_profit > 0 %}
+        Great job, farmer! Your farm ended the game with a total profit of <strong>{{ total_profit }}</strong>
+        and you still have <strong>{{ session.tokens if session.tokens is defined else 0 }}</strong> tokens to spend on future seasons.
+    {% else %}
+        Tough season! Your farm finished with an overall loss of <strong>{{ total_profit if total_profit is defined else 0 }}</strong>.
+        You still have <strong>{{ session.tokens if session.tokens is defined else 0 }}</strong> tokens, use them wisely next time to turn things around.
+    {% endif %}
+</p>
+
+{% set weather_labels = {
+    "s_drought": "Drought Summer",
+    "s_hail": "Hail Summer",
+    "s_wet": "Wet Summer",
+    "w_cold": "Cold Winter",
+    "w_wet": "Wet Winter"
+} %}
+
+{% for season, data in season_history.items() %}
+<div class="gameover-season-card">
+    <h2>Season {{ season }}</h2>
+
+    <div class="gameover-flex-row">
+
+        <!-- Linke Spalte: Wetter & Performance -->
+        <div class="gameover-left-col">
+
+            <!-- Wetter -->
+            <div class="gameover-weather-card">
+                <h3>Weather</h3>
+                <table class="gameover-weather-table">
+                    <tr>
+                        <th>Winter</th>
+                        <th>Summer</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            {% if data['weather']['winter'] %}
+                                {% for w in data['weather']['winter'] %}
+                                    {{ weather_labels[w] if w in weather_labels else w }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                No significant winter weather
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if data['weather']['summer'] %}
+                                {% for w in data['weather']['summer'] %}
+                                    {{ weather_labels[w] if w in weather_labels else w }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                No significant summer weather
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Performance -->
+            <div class="gameover-performance-card">
+                <h3>Performance</h3>
+                <p><strong>Winter Costs:</strong> {{ data['cost_winter'] }}</p>
+                <p><strong>Summer Costs:</strong> {{ data['cost_summer'] }}</p>
+                <p><strong>Mitigation Costs:</strong> {{ data['cost_mitigations'] }}</p>
+                <p><strong>Total Costs:</strong> {{ data['cost_winter'] + data['cost_summer'] + data['cost_mitigations'] }}</p>
+                <hr>
+                <p><strong>Yield:</strong> {{ data['yield'] }}</p>
+                <p><strong>Profit:</strong> {{ data['profit'] }}</p>
+            </div>
+        </div>
+
+        <!-- Rechte Spalte: Feldübersicht -->
+        <div class="gameover-right-col">
+            <h3>Field Overview</h3>
+            <p class="field-season-label"><em>Winter → Summer</em></p>
+            <div class="gameover-field-grid">
+                {% for i in range(6) %}
+                    <div class="gameover-field-col">
+                        <strong>Plot {{ i+1 }}</strong>
+                        <div class="field-plant-transition">
+                            <div class="field-slot plant-{{ data['winter_plants'][i] }}">
+                                {{ data['winter_plants'][i]|capitalize }}
+                            </div>
+                            <span class="field-arrow">→</span>
+                            <div class="field-slot plant-{{ data['summer_plants'][i] }}">
+                                {{ data['summer_plants'][i]|capitalize }}
+                            </div>
+                        </div>
+                        {% if data['mitigations'][i] %}
+                            <div class="mitigation-list">
+                                <em>Mitigations:</em>
+                                {% for m in data['mitigations'][i] %}
+                                    <span class="mitigation-badge">
+                                        {{ m|capitalize }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="mitigation-empty">
+                                <em>No mitigations</em>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endfor %}
+
+<!-- Gesamtübersicht -->
+<div class="gameover-summary-card">
+    <h2>Overall Summary</h2>
+    <p><strong>Total Yield:</strong> {{ total_yield }}</p>
+    <p><strong>Total Costs:</strong> {{ total_costs }}</p>
+    <p><strong>Total Profit:</strong> {{ total_profit_sum }}</p>
+    <p><strong>Tokens Remaining:</strong> {{ session.tokens if session.tokens is defined else 0 }}</p>
+</div>
+
+<!-- Restart Button -->
+<form action="{{ url_for('main.restart') }}" method="get" class="restart-form">
+    <button type="submit" class="restart-button">
+        Restart Game
+    </button>
+</form>
+{% endblock %}

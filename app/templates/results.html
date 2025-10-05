@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+<meta http-equiv="Cache-Control" content="no-store" />
+
+{% set weather_labels = {
+    "s_drought": "Drought Summer",
+    "s_hail": "Hail Summer",
+    "s_wet": "Wet Summer",
+    "w_cold": "Cold Winter",
+    "w_wet": "Wet Winter"
+} %}
+
+{% block content %}
+<h1>Results for {{ year }}</h1>
+<div class="results-container">
+
+    <!-- Left Column: Weather & Performance -->
+    <div class="left">
+
+        <!-- Weather Summary -->
+        <div class="results-card">
+            <h2>Weather Summary</h2>
+            <p><strong>Winter:</strong>
+                {% if weather.winter %}
+                    {% for w in weather.winter %}
+                        {{ weather_labels[w] if w in weather_labels else w }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                {% else %}
+                    No significant winter weather
+                {% endif %}
+            </p>
+            <p><strong>Summer:</strong>
+                {% if weather.summer %}
+                    {% for w in weather.summer %}
+                        {{ weather_labels[w] if w in weather_labels else w }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                {% else %}
+                    No significant summer weather
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Season Performance -->
+        <div class="results-card">
+            <h2>Season Performance</h2>
+            <p><strong>Winter Costs:</strong> {{ cost_winter }}</p>
+            <p><strong>Summer Plant-Costs:</strong> {{ cost_summer }}</p>
+            <p><strong>Mitigation Costs:</strong> {{ cost_mitigations }}</p>
+            <p><strong>Total Costs:</strong> {{ cost_winter + cost_summer + cost_mitigations }}</p>
+            <hr>
+            <p><strong>Yield this Season:</strong> {{ yield_this_season }}</p>
+            <p><strong>Profit this Season:</strong> {{ yield_this_season - (cost_winter + cost_summer + cost_mitigations) }}</p>
+        </div>
+
+        <!-- Overall Summary -->
+        <div class="results-card">
+            <h2>Overview</h2>
+            <p><strong>Total Profit so far:</strong> {{ total_profit }}</p>
+            <p><strong>Available Tokens:</strong> {{ tokens }}</p>
+        </div>
+    </div>
+
+    <!-- Right Column: Field Overview & Mitigations -->
+    <div class="right">
+        <h2>Field Overview</h2>
+        <p><em>Winter → Summer Transition</em></p>
+        <div class="field-grid results-field-grid">
+            {% for i in range(6) %}
+                <div class="results-field-col">
+                    <strong>Plot {{ i+1 }}</strong>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+                        <!-- Winter Plant -->
+                        <div class="field-slot plant-{{ winter_plants[i] }}">
+                            {{ winter_plants[i]|capitalize }}
+                        </div>
+                        <span style="font-weight:bold;">→</span>
+                        <!-- Summer Plant -->
+                        <div class="field-slot plant-{{ summer_plants[i] }}">
+                            {{ summer_plants[i]|capitalize }}
+                        </div>
+                    </div>
+
+                    <!-- Mitigations -->
+                    {% if mitigations[i] %}
+                        <div class="mitigations-list">
+                            <em>Mitigations:</em>
+                            {% for m in mitigations[i] %}
+                                <span style="background:#e0f7fa; padding:2px 6px; border-radius:4px; margin-right:3px;">{{ m|capitalize }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="mitigations-list no-mitigations">
+                            <em>No mitigations</em>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Button to Play Next Season -->
+<form action="{{ url_for('main.winter') }}" method="get" class="submit-form">
+    <button type="submit" class="submit_btn">
+        Play Next Season
+    </button>
+</form>
+{% endblock %}

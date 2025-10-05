@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Farm or Fallow?</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+</head>
+<body>
+    <div class="container">
+        <!-- Block content, inserted by child templates -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <form action="{{ url_for('main.restart') }}">
+            <button type="submit">Play new game</button>
+        </form>
+        <form action="javascript:void(0);">
+            <button type="button" id="info_btn">Information about the Game</button>
+        </form>
+    </footer>
+
+    <!-- Overlay Info -->
+    <div id="overlay" class="overlay hidden">
+        <div class="info-content">
+            <button id="close-info" class="close-btn">X</button>
+            <h2>Information about the Game:</h2>
+            <p>
+                This serious game was digitalized and further developed as part of a bachelor thesis. It is designed to teach sustainable agriculture practices: players select crops for different seasons, manage resources, and see how their choices affect yield and tokens.
+            </p>
+            <h3>Learning Objectives:</h3>
+            <ul>
+                <li>Understand seasonal weather patterns and their impact on crops.</li>
+                <li>Learn to interpret precipitation and temperature charts to make informed decisions.</li>
+                <li>Compare forecasted vs. historical climate data to assess risk (drought, hail, frost, etc.).</li>
+            </ul>
+            <h3>Data Sources:</h3>
+            <ul>
+                <li>Precipitation forecast, temperature probabilities, and wind data: <a href="https://open-meteo.com/en/docs/historical-forecast-api" target="_blank">Open-Meteo Historical Forecast API</a></li>
+                <li>Observed precipitation & temperature, climatology (40y): <a href="https://open-meteo.com/en/docs/historical-weather-api" target="_blank">Open-Meteo Historical Weather API</a></li>
+                <li>Hail days: Based on general weather codes from <a href="https://www.meteomatics.com/en/api/available-parameters/weather-parameter/general-weather-state/" target="_blank">Meteomatics</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- JavaScript for overlay functionality -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const infoBtn = document.getElementById('info_btn');
+        const overlay = document.getElementById('overlay');
+        const closeBtn = document.getElementById('close-info');
+
+        infoBtn.addEventListener('click', () => {
+            overlay.classList.remove('hidden');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            overlay.classList.add('hidden');
+        });
+    });
+    </script>
+
+</body>
+</html>

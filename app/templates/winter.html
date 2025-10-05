@@ -1,0 +1,249 @@
+{% extends "layout.html" %}
+
+<!-- Climate Plots metadata -->
+{% set climate_plots = {
+    "1": {"title": "Seasonal Precipitation", "tooltip": "Seasonal Precipitation Forecast", "png_id": "precipitation_forecast"},
+    "2": {"title": "Temperature Probabilities", "tooltip": "Table of percentage probability of forecast daily maximum temperature in upper, middle or lower tercile", "png_id": "temperature_probabilities"},
+    "3": {"title": "Wind Speed & Direction", "tooltip": "Forecast Wind Speed and Direction", "png_id": "windrose_forecast"},
+    "4": {"title": "Observed Precipitation (12m)", "tooltip": "Observed Precipitation data for the previous 12 months", "png_id": "precip_obs_and_clim"},
+    "5": {"title": "Observed Max Temperature", "tooltip": "Observed Daily Maximum Temperatures for the previous year (averaged per month)", "png_id": "observed_max_temperature"},
+    "6": {"title": "Climatology: Precip (40y)", "tooltip": "Climatological Data Precipitation for the last 40 years", "png_id": "climatology_precip_40y"},
+    "7": {"title": "Climatology: Temp (40y)", "tooltip": "Climatological Data Temperature for the last 40 years", "png_id": "climatology_temp_40y"}
+} %}
+
+{% block content %}
+<h1>Select winter crops for winter in season {{ season }}</h1>
+<link rel="stylesheet" href="{{ url_for('static', filename='winter.css') }}">
+<div class="plant-selection-container">
+
+    <!-- Left Column -->
+    <div class="left-container">
+
+        <!-- Token Overview -->
+        <div class="token-overview">
+            <h2>Token Overview</h2>
+            <p><strong>Starting Tokens:</strong> <span id="tokens-start">{{ tokens }}</span></p>
+            <p><strong>Cost of Selected Plants:</strong> <span id="tokens-cost">0</span></p>
+            <p><strong>Remaining Tokens:</strong> <span id="tokens-remaining">{{ tokens }}</span></p>
+        </div>
+
+        <!-- Selection Form -->
+        <div class="plant-form">
+            <form action="{{ url_for('main.winter') }}" method="post">
+                <div class="plant-grid">
+                    {% for i in range(6) %}
+                        <div class="plant-slot">
+                            <label for="plant{{ i }}">Plot {{ i + 1 }}:</label>
+                            
+                            {% set initial_plant = winter_plants[i] if winter_plants[i] else (last_summer_plants[i] if last_summer_plants[i] == "grapes" else "fallow") %}
+
+                            <select name="plants" id="plant{{ i }}" required>
+                                <option value="" disabled {% if not initial_plant %}selected{% endif %}>Select a plant</option>
+                                {% for name, data in plants.items() if data['plant_time'] == "winter" or name == "fallow" %}
+                                    <option value="{{ name }}" {% if name == initial_plant %}selected{% endif %}>{{ name|capitalize }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="submit_btn">Submit selection</button>
+            </form>
+        </div>
+
+        <!-- Field Overview -->
+        <div class="field-overview">
+            <h2>Field Overview</h2>
+            <div class="field-grid">
+                {% for i in range(6) %}
+                    {% set field_plant = winter_plants[i] if winter_plants[i] else (last_summer_plants[i] if last_summer_plants[i] == "grapes" else "fallow") %}
+                    <div class="field-slot plant-{{ field_plant }}" id="field{{ i }}">
+                        Plot {{ i + 1 }}: {{ field_plant|capitalize }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-container">
+
+        <!-- Plant Overview -->
+        <div class="plant-overview">
+            <h2>Available Plants</h2>
+            <ul class="plant-list">
+                {% set impact_labels = {
+                    "w_wet": "Wet Winter",
+                    "w_cold": "Cold Winter",
+                    "s_wet": "Wet Summer",
+                    "s_drought": "Drought Summer",
+                    "s_hail": "Hail Summer"
+                } %}
+                {% for name, data in plants.items() if data['plant_time'] == "winter" or name == "fallow" %}
+                    <li class="plant-item">
+                        <h3>{{ name|capitalize }}</h3>
+                        <p>
+                            <strong>Plant Time:</strong> {{ data['plant_time']|capitalize }}<br>
+                            <strong>Yield:</strong> {{ data['yield'] }}<br>
+                            <strong>Cost:</strong> {{ data['cost'] }}{% if data['annual_cost'] > 0 and name == "grapes" %}, {{ data['annual_cost'] }} per year if the grapes remain on the same plot{% endif %}
+                        </p>
+                        <button class="toggle-impacts-btn" type="button">
+                            Show Yield Impacts
+                        </button>
+                        <ul class="impact-list" style="display: none;">
+                            {% for impact, value in data['impacts'].items() %}
+                                <li>
+                                    {{ impact_labels[impact] if impact in impact_labels else impact }}: Yield × {{ '%.2f'|format(value) }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Climate Overview -->
+        <div class="climate-overview">
+            <h2>Climate Data</h2>
+            <div class="climate-buttons">
+                {% for key, plot in climate_plots.items() %}
+                    <div class="climate-row">
+                        <button class="climate-btn"
+                                data-key="{{ plot.png_id }}"
+                                {% if key != "6" and key != "7" %}
+                                data-img="/static/plots/{{ plot.png_id }}/{{ plot.png_id }}_winter_{{ season }}.png"
+                                {% else %}
+                                data-img="/static/plots/{{ plot.png_id }}/{{ plot.png_id }}.png"
+                                {% endif %}>
+                            {{ plot.title }}
+                        </button>
+                        <span class="info-icon">ℹ️
+                            <span class="tooltip-text">
+                                {{ plot.tooltip }}
+                            </span>
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Climate Modal -->
+        <div id="climateModal">
+            <span id="closeModal">&times;</span>
+            <div>
+                <img id="climateImage" src="" alt="Climate Data">
+                <div id="climateDescription"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JS: Update Field Labels -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.plant-grid select').forEach((select,i)=>{
+        const fieldDiv = document.getElementById(`field${i}`);
+        function updateField(){
+            const plant = select.value;
+            fieldDiv.className = 'field-slot';
+            if(plant){
+                fieldDiv.classList.add(`plant-${plant}`);
+                fieldDiv.textContent = `Plot ${i+1}: ${plant.charAt(0).toUpperCase() + plant.slice(1)}`;
+            } else {
+                fieldDiv.classList.add('empty');
+                fieldDiv.textContent = `Plot ${i+1}`;
+            }
+        }
+        updateField();
+        select.addEventListener('change', updateField);
+    });
+});
+</script>
+
+<!-- JS: Token Calculation -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const tokensStart = {{ tokens }};
+    const plantsData = {{ plants | tojson }};
+    const selectedPlantsLastSeason = {{ winter_plants | tojson }};
+    const costDisplay = document.getElementById('tokens-cost');
+    const remainingDisplay = document.getElementById('tokens-remaining');
+    const submitButton = document.querySelector('.submit_btn');
+    function calculateTokens(){
+        let totalCost = 0;
+        document.querySelectorAll('.plant-grid select').forEach((select,i)=>{
+            const plant = select.value;
+            if(plant && plantsData[plant]){
+                if(plant === "grapes" && selectedPlantsLastSeason[i] === "grapes"){
+                    totalCost += plantsData[plant]['annual_cost'];
+                } else {
+                    totalCost += plantsData[plant]['cost'];
+                }
+            }
+        });
+        const remaining = tokensStart - totalCost;
+        costDisplay.textContent = totalCost;
+        remainingDisplay.textContent = remaining;
+        submitButton.disabled = remaining < 0;
+        remainingDisplay.style.color = remaining < 0 ? 'red' : '';
+    }
+    calculateTokens();
+    document.querySelectorAll('.plant-grid select').forEach(select => {
+        select.addEventListener('change', calculateTokens);
+    });
+});
+</script>
+
+<!-- JS: Climate Modal -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('climateModal');
+    const modalImg = document.getElementById('climateImage');
+    const closeBtn = document.getElementById('closeModal');
+    const descDiv = document.getElementById('climateDescription');
+    const climateDescriptions = {
+        "precipitation_forecast": "This graph shows how much rain is expected in the coming season (in millimeters). More or less rainfall than usual can strongly influence your harvest.",
+        "temperature_probabilities": "This table shows the chances of having unusually hot, normal, or unusually cool days in the upcoming season. The calculation is based on how temperatures compare to the last 40 years. It helps you judge the risk of heat stress for your crops.",
+        "windrose_forecast": "This wind rose shows how often the wind is expected to blow from each direction and how strong it will be. Wind affects soil drying, crop stability, and even pest spread.",
+        "precip_obs_and_clim": "Here you see how much rain actually fell in the last year compared to the long-term average. This helps you spot whether recent seasons were wetter or drier than normal.",
+        "observed_max_temperature": "This line chart shows the average of the hottest days each month over the past year. Warmer-than-usual months may have stressed your crops, while cooler periods could have slowed growth.",
+        "climatology_precip_40y": "This graph looks back 40 years to show typical rainfall patterns for each month. The shaded areas show the natural ups and downs of rainfall—helpful for spotting how unusual recent weather really was.",
+        "climatology_temp_40y": "This graph shows the 40-year climate of daily temperatures (coldest nights, warmest days, and averages). The shaded bands highlight natural variability, so you can see if recent years were hotter or cooler than normal."
+    };
+
+    document.querySelectorAll('.climate-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            const key = btn.dataset.key;
+            modalImg.src = btn.dataset.img;
+            descDiv.innerHTML = climateDescriptions[key];
+            modalImg.style.opacity = 0;
+            modalImg.onload = () => {
+                modal.style.display="block";
+                modalImg.style.transition="opacity 0.3s";
+                modalImg.style.opacity=1;
+            };
+        });
+    });
+
+    closeBtn.addEventListener('click', ()=>{ modal.style.display="none"; });
+    modal.addEventListener('click', e=>{ if(e.target===modal) modal.style.display="none"; });
+});
+</script>
+
+<!-- JS: Toggle Impacts -->
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('.toggle-impacts-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            const impactList = btn.nextElementSibling;
+            if(impactList.style.display==='none'){
+                impactList.style.display='block';
+                btn.textContent='Hide Yield Impacts';
+            } else {
+                impactList.style.display='none';
+                btn.textContent='Show Yield Impacts';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{
+    "wheat": {
+      "plant_time": "winter",
+      "yield": 20,
+      "cost": 10,
+      "annual_cost": 0,
+      "impacts": {
+        "w_wet": 0.75,
+        "w_cold": 0.75,
+        "s_wet": 1,
+        "s_drought": 0.8,
+        "s_hail": 1
+      }
+    },
+    "maize": {
+      "plant_time": "summer",
+      "yield": 40,
+      "cost": 20,
+      "annual_cost": 0,
+      "impacts": {
+        "w_wet": 1,
+        "w_cold": 1,
+        "s_wet": 1,
+        "s_drought": 0.5,
+        "s_hail": 0.8
+      }
+    },
+    "grapes": {
+      "plant_time": "winter",
+      "yield": 40,
+      "cost": 45,
+      "annual_cost": 12,
+      "impacts": {
+        "w_wet": 0.9,
+        "w_cold": 1,
+        "s_wet": 0.75,
+        "s_drought": 0.75,
+        "s_hail": 0.5
+      }
+    },
+    "fallow": {
+      "plant_time": "none",
+      "yield": 0,
+      "cost": 0,
+      "annual_cost": 0,
+      "impacts": {
+        "w_wet": 1,
+        "w_cold": 1,
+        "s_wet": 1,
+        "s_drought": 1,
+        "s_hail": 1
+      }
+    }
+}
+  

@@ -1,0 +1,26 @@
+{
+    "2022-23": {
+        "winter": {
+            "wet": false,
+            "cold": false
+        },
+        "summer": {
+            "wet": false,
+            "drought": false,
+            "streamflow": false,
+            "hail": false
+        }
+    },
+    "2023-24": {
+        "winter": {
+            "wet": false,
+            "cold": false
+        },
+        "summer": {
+            "wet": false,
+            "drought": true,
+            "streamflow": false,
+            "hail": false
+        }
+    }
+}

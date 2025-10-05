@@ -1,0 +1,7 @@
+app/static/plots/*
+app/__pycache__/*
+app/data/forecast_data.json
+app/data/temperature_precip_40y.json
+app/data/weather_data.json
+app/data/game_settings.json
+venv/

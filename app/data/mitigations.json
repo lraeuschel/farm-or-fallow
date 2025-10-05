@@ -1,0 +1,13 @@
+{
+    "irrigation": {
+        "available_for":["grapes", "maize"],
+        "costs": 4,
+        "reduces_impact_of": "drought",
+        "note": "Only available if there is streamflow in the river!"
+    },
+    "hail_nets": {
+        "available_for": ["grapes"],
+        "costs": 12,
+        "reduces_impact_of": "hail"
+    }
+}
